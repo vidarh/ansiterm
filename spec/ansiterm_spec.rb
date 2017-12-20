@@ -1,11 +1,7 @@
 require "spec_helper"
 
-describe Ansiterm do
+describe AnsiTerm do
   it "has a version number" do
-    expect(Ansiterm::VERSION).not_to be nil
-  end
-
-  it "does something useful" do
-    expect(false).to eq(true)
+    expect(AnsiTerm::VERSION).not_to be nil
   end
 end

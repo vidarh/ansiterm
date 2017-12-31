@@ -35,7 +35,10 @@ module AnsiTerm
     end
     
     def add_flag(flags); merge({flags: @flags | flags}); end
-      
+    def clear_flag(flags); merge({flags: @flags & ~BOLD}); end
+
+    def reset;        self.class.new; end
+    def normal;       clear_flag(BOLD); end
     def bold;         add_flag(BOLD); end
     def underline;    add_flag(UNDERLINE); end
     def crossed_out;  add_flag(CROSSED_OUT); end
@@ -44,11 +47,20 @@ module AnsiTerm
     def underline?;   (@flags & UNDERLINE) != 0; end
     def crossed_out?; (@flags & CROSSED_OUT) != 0; end
 
+    def normal?
+      @flags == NORMAL &&
+        @fgcol.nil? &&
+        @bgcol.nil?
+    end
+
     def transition_to(other)
       t = []
       t << [other.fgcol] if other.fgcol != self.fgcol
       t << [other.bgcol] if other.bgcol != self.bgcol
-      t << [1] if other.bold? && !self.bold?
+      
+      if other.bold? != self.bold?
+        t << [other.bold? ? 1 : 22]
+      end
       
       if other.underline? != self.underline?
         t << [other.underline? ? 4 : 24]
@@ -57,6 +69,8 @@ module AnsiTerm
       if other.crossed_out? != self.crossed_out?
         t << [other.crossed_out? ? 9 : 29]
       end
+
+      return "\e[0m" if other.normal? && !self.normal? && t.length != 1
       
       if t.empty?
         ""

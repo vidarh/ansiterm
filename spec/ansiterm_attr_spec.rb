@@ -54,6 +54,13 @@ describe AnsiTerm::Attr do
     expect(attr.flags).to eq AnsiTerm::Attr::NORMAL
   end
 
+  it "creates a new object with the BOLD flag *cleared* when you call #normal" do
+    f = attr.bold.underline
+    expect(attr).to_not be eq(f)
+    expect(f.flags).to eq AnsiTerm::Attr::BOLD | AnsiTerm::Attr::UNDERLINE
+    expect(f.normal.flags).to eq AnsiTerm::Attr::UNDERLINE
+  end
+
   it "returns a boolean from #bold? reflecting whether the BOLD flag is set" do
     expect(attr.bold?).to eq false
     expect(attr.bold.bold?).to eq true
@@ -71,6 +78,10 @@ describe AnsiTerm::Attr do
 
     it "returns \\e[1m if enabling bold" do
       expect(attr.transition_to(attr.bold)).to eq "\e[1m"
+    end
+
+    it "returns \\e[22m if disabling bold" do
+      expect(attr.bold.transition_to(attr)).to eq "\e[22m"
     end
 
     it "returns \\e[32m; if fgcol changes to 32" do
@@ -95,6 +106,10 @@ describe AnsiTerm::Attr do
     
     it "returns \\e[29m; if we disable crossed_out" do
       expect(attr.crossed_out.transition_to(attr)).to eq "\e[29m"
-    end   
+    end
+
+    it "returns \\e[0m; if we transition to 'normal' (no flags or colors) and more than 1 other flag needs to be cleared" do
+      expect(attr.bold.crossed_out.transition_to(attr)).to eq "\e[0m"
+    end
   end
 end

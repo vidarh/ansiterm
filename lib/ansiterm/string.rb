@@ -5,7 +5,7 @@ module AnsiTerm
     def initialize(str="")
       parse(str)
     end
-    
+
     def to_str
       out = ""
       a = Attr.new
@@ -28,6 +28,10 @@ module AnsiTerm
       @str.length
     end
 
+    def index str, off = 0
+      @str.index(str,off)
+    end
+
     def set(str,attrs)
       @str, @attrs = str,Array(attrs)
     end
@@ -43,6 +47,12 @@ module AnsiTerm
       end
     end
 
+    def << str
+      str = self.class.new(str)
+      @str << str.raw
+      @attrs << str.attrs
+#      parse(self.to_str + "\e[0m" + str.to_str)
+    end
     
     private
 

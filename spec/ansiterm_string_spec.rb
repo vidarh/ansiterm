@@ -3,7 +3,7 @@ require "spec_helper"
 describe AnsiTerm::String do
   let(:empty) { AnsiTerm::String.new }
   let(:bold)  { AnsiTerm::String.new("\e[1mbold") }
-  
+
   it "responds to #to_str and returns a ::String" do
     expect(empty.to_str.class).to be ::String
   end
@@ -41,7 +41,7 @@ describe AnsiTerm::String do
     it "returns no escape sequence to turn the string back to normal at the end" do
       expect(bold.to_str).to eq("\e[1mbold")
     end
-    
+
     it "returns only the specific disabling sequence if only a single attribute needs to change to reurn to 'normal'" do
       expect(AnsiTerm::String.new("\e[1mbold\e[0mnormal").to_str).to eq("\e[1mbold\e[22mnormal")
     end
@@ -56,6 +56,32 @@ describe AnsiTerm::String do
       expect(AnsiTerm::String.new("foo\e[1mbar")[3..-1].to_str).to eq("\e[1mbar")
       expect(AnsiTerm::String.new("foo\e[1mbar")[2..-1].to_str).to eq("o\e[1mbar")
       expect(AnsiTerm::String.new("foo\e[1mbar")[-1].to_str).to eq("\e[1mr")
+    end
+  end
+
+  describe "#<<" do
+    it "concatenates an AnsiTerm::String and object that responds to #to_str" do
+      a = AnsiTerm::String.new("\e[32;44mfoo")
+      b = "bar"
+      c = AnsiTerm::String.new("\e[32;44mbaz")
+
+      a << b
+      a << c
+      expect(a.to_str).to eq("\e[32;44mfoo\e[0mbar\e[32;44mbaz")
+    end
+
+    it "splitting an AnsiTerm::String with #[] and splicing in a substring with different attributes should retain the original attributes on both sides of he spliced in segment" do
+      a = AnsiTerm::String.new("\e[32;44mfoobar")
+      b = AnsiTerm::String.new("\e[35;46;4mhello")
+
+      a1 = a[0..2]
+      a2 = a[3..-1]
+
+      r = a1
+      r << b
+      r << a2
+
+      expect(r.to_str).to eq("\e[32;44mfoo\e[35;46;4mhello\e[32;44;24mbar")
     end
   end
 end

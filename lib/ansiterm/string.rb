@@ -48,12 +48,9 @@ module AnsiTerm
     end
 
     def << str
-      str = self.class.new(str)
-      @str << str.raw
-      @attrs << str.attrs
-#      parse(self.to_str + "\e[0m" + str.to_str)
+      parse(self.to_str + "\e[0m" + str.to_str)
     end
-    
+
     private
 
     def parse_color(par, params, a, attr_name)

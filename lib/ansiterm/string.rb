@@ -20,6 +20,10 @@ module AnsiTerm
       out
     end
 
+    def to_s
+      to_str
+    end
+
     def encoding
       @str.encoding
     end

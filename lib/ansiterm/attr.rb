@@ -1,6 +1,8 @@
 
 module AnsiTerm
 
+  # # Attr #
+  #
   # Attr represents the attributes of a given character.
   # It is intended to follow the "Flyweight" GOF pattern
   # in that any object representing a given combination
@@ -20,7 +22,7 @@ module AnsiTerm
     ITALICS     = 2
     UNDERLINE   = 4
     CROSSED_OUT = 8
-    
+
     attr_reader :fgcol, :bgcol, :flags
 
     def initialize(fgcol: nil, bgcol: nil, flags: 0)
@@ -31,11 +33,18 @@ module AnsiTerm
     end
 
     def merge(attrs)
+      if attrs.kind_of?(self.class)
+        old = attrs
+        attrs = {}
+        attrs[:bgcol] = old.bgcol if old.bgcol
+        attrs[:fgcol] = old.fgcol if old.fgcol
+        attrs[:flags] = old.flags if old.flags
+      end
       self.class.new({bgcol: @bgcol, fgcol: @fgcol, flags: @flags}.merge(attrs))
     end
-    
+
     def add_flag(flags); merge({flags: @flags | flags}); end
-    def clear_flag(flags); merge({flags: @flags & ~BOLD}); end
+    def clear_flag(flags); merge({flags: @flags & ~flags}); end
 
     def reset;        self.class.new; end
     def normal;       clear_flag(BOLD); end
@@ -55,23 +64,23 @@ module AnsiTerm
 
     def transition_to(other)
       t = []
-      t << [other.fgcol] if other.fgcol != self.fgcol
-      t << [other.bgcol] if other.bgcol != self.bgcol
-      
+      t << [other.fgcol] if other.fgcol && other.fgcol != self.fgcol
+      t << [other.bgcol] if other.bgcol && other.bgcol != self.bgcol
+
       if other.bold? != self.bold?
         t << [other.bold? ? 1 : 22]
       end
-      
+
       if other.underline? != self.underline?
         t << [other.underline? ? 4 : 24]
       end
-      
+
       if other.crossed_out? != self.crossed_out?
         t << [other.crossed_out? ? 9 : 29]
       end
 
       return "\e[0m" if other.normal? && !self.normal? && t.length != 1
-      
+
       if t.empty?
         ""
       else

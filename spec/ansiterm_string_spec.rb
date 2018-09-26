@@ -46,9 +46,21 @@ describe AnsiTerm::String do
       expect(AnsiTerm::String.new("\e[1mbold\e[0mnormal").to_str).to eq("\e[1mbold\e[22mnormal")
     end
 
+    it "handles leading zeros in CSI sequences" do
+      expect(AnsiTerm::String.new("\e[01mbold\e[000mnormal").to_str).to eq("\e[1mbold\e[22mnormal")
+    end
+
+    it "handle underline/disable underline" do
+      expect(AnsiTerm::String.new("\e[4munderlined\e[24mnormal").to_str).to eq("\e[4munderlined\e[24mnormal")
+    end
+
     it "returns only the final set of attributes applicable for a given span" do
       expect(AnsiTerm::String.new("\e[1m\e[0mnormal").to_str).to eq("normal")
       expect(AnsiTerm::String.new("\e[1mfoo\e[22mnormal").to_str).to eq("\e[1mfoo\e[22mnormal")
+    end
+
+    it "handles multiple color directives in sequence" do
+      expect(AnsiTerm::String.new("\e[37m\e[40mfoo").to_str).to eq("\e[37;40mfoo")
     end
 
     it "#[] returns a substring counting visible characters, setting the attributes according to attributes enabled at that point in the string" do
@@ -56,6 +68,15 @@ describe AnsiTerm::String do
       expect(AnsiTerm::String.new("foo\e[1mbar")[3..-1].to_str).to eq("\e[1mbar")
       expect(AnsiTerm::String.new("foo\e[1mbar")[2..-1].to_str).to eq("o\e[1mbar")
       expect(AnsiTerm::String.new("foo\e[1mbar")[-1].to_str).to eq("\e[1mr")
+    end
+  end
+
+  describe "#set_attr" do
+    it "replaces the attributes for a given position or range of positions with the passed attribute" do
+      a = AnsiTerm::String.new("\e[32;44mfoobarbaz")
+      AnsiTerm::Attr.new
+      a.set_attr(3..5, AnsiTerm::Attr.new(bgcol: 46))
+      expect(a.to_str).to eq("\e[32;44mfoo\e[46mbar\e[44mbaz")
     end
   end
 
@@ -68,6 +89,13 @@ describe AnsiTerm::String do
       a << b
       a << c
       expect(a.to_str).to eq("\e[32;44mfoo\e[0mbar\e[32;44mbaz")
+    end
+
+    it "correctly maintains attributes" do
+      a = AnsiTerm::String.new("\e[4mfoo\e[0m bar")
+      expect(a.to_str).to eq("\e[4mfoo\e[24m bar")
+      a << " "
+      expect(a.to_str).to eq("\e[4mfoo\e[24m bar ")
     end
 
     it "splitting an AnsiTerm::String with #[] and splicing in a substring with different attributes should retain the original attributes on both sides of he spliced in segment" do

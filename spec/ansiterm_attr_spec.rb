@@ -2,7 +2,7 @@ require "spec_helper"
 
 describe AnsiTerm::Attr do
   let(:attr) { AnsiTerm::Attr.new }
-  
+
   it "responds to fgcol (foreground color)" do
     expect(attr.respond_to?(:fgcol)).to be true
   end
@@ -32,11 +32,17 @@ describe AnsiTerm::Attr do
     expect(a.flags).to be AnsiTerm::Attr::UNDERLINE
   end
 
+  it "can have the flags clered with #clear_flag" do
+    a = AnsiTerm::Attr.new(flags: AnsiTerm::Attr::UNDERLINE)
+    a = a.clear_flag(AnsiTerm::Attr::UNDERLINE)
+    expect(a.flags).to be(AnsiTerm::Attr::NORMAL)
+  end
+
   it "can be created with Attr::BOLD flag" do
     a = AnsiTerm::Attr.new(flags: AnsiTerm::Attr::BOLD)
     expect(a.flags).to be AnsiTerm::Attr::BOLD
   end
-  
+
   it "can be created with Attr::ITALICS flag" do
     a = AnsiTerm::Attr.new(flags: AnsiTerm::Attr::ITALICS)
     expect(a.flags).to be AnsiTerm::Attr::ITALICS

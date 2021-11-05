@@ -12,7 +12,7 @@ module AnsiTerm
   # whether to e.g. encode a string as spans with one Attr,
   # or characters with one Attr per character.
   #
-  # Use Attr#transition(other_attr) to retrieve an ANSI
+  # Use `Attr#transition(other_attr)` to retrieve an ANSI
   # sequence that represents the changes from self to
   # other_attr.
   #
@@ -32,7 +32,15 @@ module AnsiTerm
       freeze
     end
 
+    def ==(other)
+      return false if !other.kind_of?(self.class)
+      return fgcol == other.fgcol &&
+             bgcol == other.bgcol &&
+             flags == other.flags
+    end
+
     def merge(attrs)
+      return self if self == attrs
       if attrs.kind_of?(self.class)
         old = attrs
         attrs = {}
@@ -64,8 +72,8 @@ module AnsiTerm
 
     def transition_to(other)
       t = []
-      t << [other.fgcol] if other.fgcol && other.fgcol != self.fgcol
-      t << [other.bgcol] if other.bgcol && other.bgcol != self.bgcol
+      t << [other.fgcol] if other.fgcol != self.fgcol && other.fgcol
+      t << [other.bgcol] if other.bgcol != self.fgcol && other.bgcol
 
       if other.bold? != self.bold?
         t << [other.bold? ? 1 : 22]
@@ -89,4 +97,7 @@ module AnsiTerm
     end
   end
 
+  def self.attr(*args)
+    Attr.new(*args)
+  end
 end

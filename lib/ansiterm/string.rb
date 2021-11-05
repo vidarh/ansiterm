@@ -1,16 +1,20 @@
- 
-# This is a test
+# coding: utf-8
 module AnsiTerm
 
   class String
-    def initialize(str="")
-      parse(str)
+    def initialize(str=nil)
+      if str
+        parse(str)
+      else
+        @str = ""
+        @attrs = []
+      end
     end
 
     def to_plain_str
       @str.dup
     end
-    
+
     def to_str
       out = ""
       a = Attr.new
@@ -45,15 +49,39 @@ module AnsiTerm
       @str, @attrs = str,Array(attrs)
     end
 
+    def raw
+      return @str, Array(@attrs)
+    end
+
     def set_attr(range, attr)
-      min = range.first - 1
+      min   = [range.first - 1,0].max
       fattr = @attrs[min]
-      attr = fattr.merge(attr) if fattr
+      attr  = fattr.merge(attr)
       r = Array(@attrs[range]).count # Inefficient, but saves dealing with negative offsets etc. "manually"
       last = nil
-      @attrs[range] = @attrs[range].map do |a| 
-        a == last ? a : last = attr.merge(a)
+      @attrs[range] = @attrs[range].map do |a|
+        n = a.merge(attr)
+        last == n ? last : n
       end
+      rm = range.last
+      if a = @attrs[rm]
+        @attrs[rm] = Attr.new(bgcol:40).merge(fattr).merge(a)
+      end
+    end
+
+    def merge_attr_below(range, attr)
+      min = [0,range.first - 1].max
+      fattr = @attrs[min]
+      r = Array(@attrs[range]).count # Inefficient, but saves dealing with negative offsets etc. "manually"
+      last = nil
+      @attrs[range] = @attrs[range].map do |a|
+        if a.bgcol == 49
+          a.merge(attr)
+        else
+          attr.merge(a)
+        end
+      end
+      #fattr #@attrs[min+r].merge(fattr)
     end
 
     def[]= range, str
@@ -75,12 +103,25 @@ module AnsiTerm
       end
     end
 
+    def char_at(index)
+      @str[index]
+    end
+    
     def attr_at(index)
       @attrs[index]
     end
 
     def << str
-      parse(self.to_str + "\e[0m" + str.to_str)
+      return self if str.nil?
+      if !str.kind_of?(self.class)
+        parse(self.to_str + "\e[0m" + str.to_str)
+        return self
+      end
+
+      s,a = str.raw
+      @str.concat(s)
+      @attrs.concat(a)
+      self
     end
 
     private
@@ -161,5 +202,9 @@ module AnsiTerm
       end
       self
     end
+  end
+
+  def self.str(*args)
+    AnsiTerm::String.new(*args)
   end
 end

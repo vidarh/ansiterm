@@ -1,4 +1,3 @@
-
 module AnsiTerm
 
   # # Attr #
@@ -25,10 +24,10 @@ module AnsiTerm
 
     attr_reader :fgcol, :bgcol, :flags
 
-    def initialize(fgcol: nil, bgcol: nil, flags: 0)
+    def initialize(fgcol: nil, bgcol: nil, flags: nil)
       @fgcol = fgcol
       @bgcol = bgcol
-      @flags = flags || 0
+      @flags = flags
       freeze
     end
 
@@ -39,20 +38,28 @@ module AnsiTerm
              flags == other.flags
     end
 
-    def merge(attrs)
-      return self if self == attrs
-      if attrs.kind_of?(self.class)
-        old = attrs
-        attrs = {}
-        attrs[:bgcol] = old.bgcol if old.bgcol
-        attrs[:fgcol] = old.fgcol if old.fgcol
-        attrs[:flags] = old.flags if old.flags
-      end
-      self.class.new({bgcol: @bgcol, fgcol: @fgcol, flags: @flags}.merge(attrs))
+    def to_h
+      attrs = {}
+      attrs[:bgcol] = @bgcol if @bgcol
+      attrs[:fgcol] = @fgcol if @fgcol
+      attrs[:flags] = @flags if @flags
+      attrs
     end
 
-    def add_flag(flags); merge({flags: @flags | flags}); end
-    def clear_flag(flags); merge({flags: @flags & ~flags}); end
+    def merge(attrs, ignore: nil)
+      return self if self == attrs
+      if attrs.respond_to?(:to_h)
+        attrs = attrs.to_h
+      end
+      if ignore
+        attrs.delete(ignore)
+      end
+      attrs = to_h.merge(attrs)
+      self.class.new(attrs)
+   end
+
+    def add_flag(flags);   merge({flags: @flags.to_i | flags.to_i}); end
+    def clear_flag(flags); merge({flags: @flags.to_i & ~flags.to_i}); end
 
     def reset;        self.class.new; end
     def normal;       clear_flag(BOLD); end
@@ -60,14 +67,14 @@ module AnsiTerm
     def underline;    add_flag(UNDERLINE); end
     def crossed_out;  add_flag(CROSSED_OUT); end
 
-    def bold?;        (@flags & BOLD) != 0; end
-    def underline?;   (@flags & UNDERLINE) != 0; end
-    def crossed_out?; (@flags & CROSSED_OUT) != 0; end
+    def bold?;        (@flags.to_i & BOLD) != 0; end
+    def underline?;   (@flags.to_i & UNDERLINE) != 0; end
+    def crossed_out?; (@flags.to_i & CROSSED_OUT) != 0; end
 
     def normal?
-      @flags == NORMAL &&
-        @fgcol.nil? &&
-        @bgcol.nil?
+      (@flags == NORMAL || @flags.nil?) &&
+        (@fgcol.nil? || @fgcol == 39) &&
+        (@bgcol.nil? || @bgcol == 49)
     end
 
     def transition_to(other)
@@ -92,7 +99,7 @@ module AnsiTerm
       if t.empty?
         ""
       else
-        "\e[#{t.join(";")}m"
+        "\e[#{t.flatten.join(";")}m"
       end
     end
   end

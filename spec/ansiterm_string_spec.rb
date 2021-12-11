@@ -72,11 +72,22 @@ describe AnsiTerm::String do
   end
 
   describe "#set_attr" do
-    it "replaces the attributes for a given position or range of positions with the passed attribute" do
+    it "replaces the *set* attributes for a given position or range of positions with the passed attribute" do
       a = AnsiTerm::String.new("\e[32;44mfoobarbaz")
-      AnsiTerm::Attr.new
       a.set_attr(3..5, AnsiTerm::Attr.new(bgcol: 46))
       expect(a.to_str).to eq("\e[32;44mfoo\e[46mbar\e[44mbaz")
+    end
+
+    it "if no bg color is set, and one is set for a substring, the rest reverts to unset" do
+      a = AnsiTerm::String.new("\e[32mfoobarbaz")
+      a.set_attr(3..5, AnsiTerm::Attr.new(bgcol: 46))
+      expect(a.to_str).to eq("\e[32mfoo\e[46mbar\e[49mbaz")
+    end
+
+    it "if no flags are set, and one is set for a substring, the rest reverts to unset" do
+      a = AnsiTerm::String.new("foobarbaz")
+      a.set_attr(3..5, AnsiTerm::Attr.new(flags: 4))
+      expect(a.to_str).to eq("foo\e[4mbar\e[0mbaz")
     end
   end
 

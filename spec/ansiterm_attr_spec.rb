@@ -32,7 +32,7 @@ describe AnsiTerm::Attr do
     expect(a.flags).to be AnsiTerm::Attr::UNDERLINE
   end
 
-  it "can have the flags clered with #clear_flag" do
+  it "can have the flags cleared with #clear_flag" do
     a = AnsiTerm::Attr.new(flags: AnsiTerm::Attr::UNDERLINE)
     a = a.clear_flag(AnsiTerm::Attr::UNDERLINE)
     expect(a.flags).to be(AnsiTerm::Attr::NORMAL)
@@ -57,7 +57,7 @@ describe AnsiTerm::Attr do
     bold = attr.bold
     expect(attr).to_not be eq(bold)
     expect(bold.flags).to eq AnsiTerm::Attr::BOLD
-    expect(attr.flags).to eq AnsiTerm::Attr::NORMAL
+    expect(attr.flags).to eq nil
   end
 
   it "creates a new object with the BOLD flag *cleared* when you call #normal" do
@@ -76,7 +76,7 @@ describe AnsiTerm::Attr do
     expect(attr.underline?).to eq false
     expect(attr.underline.underline?).to eq true
   end
-  
+
   describe "#transition_to" do
     it "returns an empty string when there is no change" do
       expect(attr.transition_to(attr)).to eq ""
@@ -101,7 +101,7 @@ describe AnsiTerm::Attr do
     it "returns \\e[4m; if we enable underline" do
       expect(attr.transition_to(attr.underline)).to eq "\e[4m"
     end
-    
+
     it "returns \\e[24m; if we disable underline" do
       expect(attr.underline.transition_to(attr)).to eq "\e[24m"
     end
@@ -109,7 +109,7 @@ describe AnsiTerm::Attr do
     it "returns \\e[9m; if we enable crossed_out" do
       expect(attr.transition_to(attr.crossed_out)).to eq "\e[9m"
     end
-    
+
     it "returns \\e[29m; if we disable crossed_out" do
       expect(attr.crossed_out.transition_to(attr)).to eq "\e[29m"
     end
@@ -117,5 +117,20 @@ describe AnsiTerm::Attr do
     it "returns \\e[0m; if we transition to 'normal' (no flags or colors) and more than 1 other flag needs to be cleared" do
       expect(attr.bold.crossed_out.transition_to(attr)).to eq "\e[0m"
     end
+  end
+
+  describe "#merge" do
+    it "overwrites the background when a different background is passed" do
+      bg1 = AnsiTerm::Attr.new(bgcol: 44)
+      bg2 = AnsiTerm::Attr.new(bgcol: 45)
+      expect(bg1.merge(bg2).bgcol).to eq bg2.bgcol
+    end
+
+    it "does not overwrite the background when the second attribute does not have a background set" do
+      bg1 = AnsiTerm::Attr.new(bgcol: 44)
+      bg2 = AnsiTerm::Attr.new(bgcol: nil)
+      expect(bg1.merge(bg2).bgcol).to eq bg1.bgcol
+    end
+
   end
 end

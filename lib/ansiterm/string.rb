@@ -56,16 +56,19 @@ module AnsiTerm
     def set_attr(range, attr)
       min   = [range.first - 1,0].max
       fattr = @attrs[min]
-      attr  = fattr.merge(attr)
+      #attr  = fattr.merge(attr)
       r = Array(@attrs[range]).count # Inefficient, but saves dealing with negative offsets etc. "manually"
       last = nil
-      @attrs[range] = @attrs[range].map do |a|
-        n = a.merge(attr)
+      @attrs[range] = @attrs[range]&.map do |a|
+        n = a ? a.merge(attr) : attr
         last == n ? last : n
-      end
-      rm = range.last
+      end || []
+      rm = range.last+1
       if a = @attrs[rm]
-        @attrs[rm] = Attr.new(bgcol:40).merge(fattr).merge(a)
+        @attrs[rm] = Attr.new.merge(fattr).merge(a)
+        if !a.bgcol
+          @attrs[rm] = @attrs[rm].merge({bgcol: 49})
+        end
       end
     end
 
@@ -76,10 +79,11 @@ module AnsiTerm
       last = nil
       @attrs[range] = @attrs[range].map do |a|
         if a.bgcol == 49
-          a.merge(attr)
+          n = attr.merge(a, ignore: :bgcol)
         else
-          attr.merge(a)
+         n = attr.merge(a)
         end
+         last == n ? last : n
       end
       #fattr #@attrs[min+r].merge(fattr)
     end
@@ -91,7 +95,7 @@ module AnsiTerm
       @str   = s[0..(range.min-1)].to_s + @str   + s[(range.max)..-1].to_s
       @attrs = a[0..(range.min-1)].to_a + @attrs + a[(range.max)..-1].to_a
     end
-    
+
     def[] i
       str = @str[i]
       if str
@@ -106,7 +110,7 @@ module AnsiTerm
     def char_at(index)
       @str[index]
     end
-    
+
     def attr_at(index)
       @attrs[index]
     end
@@ -133,13 +137,13 @@ module AnsiTerm
         if par == "5"
           col = [col,5,params.shift].join(";")
         elsif par == "2"
-          col = ([col,2] << params.slice!(0..2)).join(";")
+          col = [col,2,*params.slice!(0..2)].join(";")
 #          ,params.shift,params.shift, params.shift].join(";")
         end
       end
       a.merge(attr_name => col)
     end
-    
+
     def parse(str)
       @str   = ""
       @attrs = []
@@ -147,7 +151,7 @@ module AnsiTerm
 
       max = str.length
       i   = 0
-      
+
       while i < max
         c = str[i]
         if c == "\e" && str[i+1] == "[" # CSI

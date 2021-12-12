@@ -89,11 +89,13 @@ module AnsiTerm
     end
 
     def[]= range, str
-      s = @str
-      a = @attrs
+      s = @str.dup
+      a = @attrs.dup
       parse(str)
-      @str   = s[0..(range.min-1)].to_s + @str   + s[(range.max)..-1].to_s
-      @attrs = a[0..(range.min-1)].to_a + @attrs + a[(range.max)..-1].to_a
+      s[range] = @str
+      @str = s
+      a[range] = @attrs
+      @attrs = a
     end
 
     def[] i

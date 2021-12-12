@@ -123,4 +123,13 @@ describe AnsiTerm::String do
       expect(r.to_str).to eq("\e[32;44mfoo\e[35;46;4mhello\e[32;44;24mbar")
     end
   end
+
+  describe "#[]=" do
+    it "Replaces the given sub-range like String does" do
+      a = AnsiTerm::String.new("0123456789")
+      a[8..9] = "YZ"
+      a[0..1] = "AB"
+      expect(a.to_str).to eq("AB234567YZ")
+    end
+  end
 end

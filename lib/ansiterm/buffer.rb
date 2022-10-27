@@ -61,6 +61,18 @@ module AnsiTerm
       end
     end
 
+    # This scrolls the *buffer* up
+    # If you want it to also scroll the *cache*
+    # pass `scroll_cache: true`. This will presume
+    # that you've scrolled the *terminal* yourself.
+    def scroll_up(num=1, scroll_cache: false)
+      @lines.slice!(0)
+      @lines << AnsiTerm::String.new
+      if scroll_cache
+        @cache.slice!(0)
+      end
+    end
+
     def to_s
       out = ""
       cachehit=0

@@ -55,7 +55,7 @@ module AnsiTerm
         attrs.delete(ignore)
       end
       attrs = to_h.merge(attrs)
-      self.class.new(attrs)
+      self.class.new(**attrs)
    end
 
     def add_flag(flags);   merge({flags: @flags.to_i | flags.to_i}); end
@@ -104,7 +104,7 @@ module AnsiTerm
     end
   end
 
-  def self.attr(*args)
-    Attr.new(*args)
+  def self.attr(...)
+    Attr.new(...)
   end
 end

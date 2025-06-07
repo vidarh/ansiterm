@@ -11,6 +11,8 @@ module AnsiTerm
       end
     end
 
+    attr_reader :str, :attrs
+    
     def to_plain_str
       @str.dup
     end
@@ -78,7 +80,7 @@ module AnsiTerm
       r = Array(@attrs[range]).count # Inefficient, but saves dealing with negative offsets etc. "manually"
       last = nil
       @attrs[range] = @attrs[range].map do |a|
-        if a.bgcol == 49
+        if a&.bgcol == 49
           n = attr.merge(a, ignore: :bgcol)
         else
          n = attr.merge(a)
@@ -89,13 +91,20 @@ module AnsiTerm
     end
 
     def[]= range, str
-      s = @str.dup
-      a = @attrs.dup
-      parse(str)
-      s[range] = @str
-      @str = s
-      a[range] = @attrs
-      @attrs = a
+      if str.is_a?(self.class)
+        #@str = @str.dup
+        #@attrs = @attrs.dup
+        @str[range] = str.str
+        @attrs[range] = str.attrs
+      else
+        s = @str.dup
+        a = @attrs.dup
+        parse(str)
+        s[range] = @str
+        @str = s
+        a[range] = @attrs
+        @attrs = a
+      end
     end
 
     def[] i
@@ -143,7 +152,7 @@ module AnsiTerm
 #          ,params.shift,params.shift, params.shift].join(";")
         end
       end
-      a.merge(attr_name => col)
+      a.merge({attr_name => col})
     end
 
     def parse(str)

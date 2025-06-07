@@ -1,4 +1,7 @@
 
+
+
+
 module AnsiTerm
 
   # # AnsiTerm::Buffer #
@@ -20,7 +23,7 @@ module AnsiTerm
       @y = 0
       @w = w
       @h = h
-      @cache = []
+      @cache = Array.new { AnsiTerm::String.new }
     end
 
     def cls
@@ -58,6 +61,8 @@ module AnsiTerm
         r=@x..@x+str.length-1
         #p [r, str]
         l[r] = str
+        @x += str.length
+        # FIXME: Handle wrap.
       end
     end
 
@@ -85,11 +90,22 @@ module AnsiTerm
         if @cache[y] != s
           # Move to start of line; output line; clear to end
           #if l > 0
-            out << "\e[#{y+1};1H" << s
-            if l < @w
-              out << "\e[0m\e[0K"
-            end
+          #s.lstrip!
+          #x = l - s.length
+          out << "\e[#{y+1};1H"
+          #if x > 1
+          #  out << "\e[1K"
           #end
+          #FIXME: We can only do this if:
+          #1. we know no background color has been set
+          #2. OR we add support for specifying it.
+          #out << s.rstrip
+          out << s
+          if l < @w
+              # FIXME: Allow setting background colour
+              out << "\e[0m\e[0K"
+            #end
+          end
           cachemiss += s.length
           old = @cache[y]
           @cache[y] = s
